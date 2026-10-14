@@ -1,5 +1,6 @@
 # gravtela
 App em desenvolvimento de gravação de tela desktop web - free
+Inicialmente o projeto era para gravar tela de celular, mas tive inplicações no desenvolvimento, porém se a comunidade ajudar.
 
 # Gravador de tela
 
