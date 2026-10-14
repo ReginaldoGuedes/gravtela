@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gravador de tela</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="cd" aria-live="assertive">5</div>
+<dialog id="micq"><h2 style="margin-top:0">Vai falar durante a gravação?</h2><p>Se sim, o microfone grava sua voz junto com o som interno do computador. Funciona com o microfone do computador ou de fones com fio ou sem fio.</p><div class="row"><button id="micYes">Sim, gravar microfone</button><button class="sec" id="micNo">Não, só o som interno</button></div></dialog>
+<dialog id="ask"><h2 style="margin-top:0">Gravação finalizada</h2><p>O que você quer fazer com o vídeo?</p><div class="row"><button id="askEdit">Editar vídeo</button><button class="sec" id="askSave">Salvar vídeo</button></div></dialog>
+<main>
+<div id="recwrap">
+  <section class="panel home" id="home">
+    <h1>O que você quer fazer?</h1>
+    <p class="sub">Grave a tela ou abra um vídeo para editar. Você poderá salvar o resultado no seu dispositivo.</p>
+    <p class="err" id="captureSupportHome" role="status" hidden></p>
+    <div class="home-actions">
+      <button class="home-action" id="openSetup"><strong>Gravar</strong><span>Capture uma aba, janela ou tela</span></button>
+      <button class="home-action" id="openCameraSetup"><strong>Gravar com câmera</strong><span>Adicione sua câmera como miniatura móvel</span></button>
+      <button class="home-action" id="chooseEdit"><strong>Editar vídeo</strong><span>Abra uma gravação ou vídeo existente</span></button>
+    </div>
+    <input type="file" id="editFile" accept="video/*,.webm,.mp4" hidden>
+  </section>
+  <section class="panel" id="setup" hidden>
+    <div class="setup-head"><button class="sec" id="backHome" type="button">Voltar</button><h2>Configurar gravação</h2></div>
+    <p class="err" id="captureSupportSetup" role="status" hidden></p>
+    <h3>O que deseja gravar?</h3>
+    <div class="choice-grid">
+      <label class="choice"><input type="radio" name="captureSource" value="browser" checked><span><strong>Uma aba</strong><span>Grave uma guia do navegador e, se disponível, o áudio dela.</span></span></label>
+      <label class="choice"><input type="radio" name="captureSource" value="monitor"><span><strong>Tela inteira</strong><span>Grave o desktop e alterne entre janelas.</span></span></label>
+      <label class="choice"><input type="radio" name="captureSource" value="window"><span><strong>Uma janela</strong><span>Grave somente uma janela escolhida.</span></span></label>
+    </div>
+    <div class="grid">
+      <label>Qualidade da gravação
+        <select id="res"><option value="480">480p — arquivo menor</option><option value="720" selected>720p — recomendada</option><option value="1080">1080p — maior definição</option></select>
+      </label>
+      <label>Microfone
+        <select id="mic"><option value="off" selected>Não gravar microfone</option><option value="on">Gravar microfone</option><option value="ask">Perguntar antes de gravar</option></select>
+      </label>
+      <label id="cameraDeviceField" hidden>Câmera conectada
+        <select id="cameraDev"><option value="">Câmera padrão</option></select>
+      </label>
+    </div>
+    <details style="margin-top:16px"><summary style="cursor:pointer;font-weight:700">Opções de áudio</summary><div class="grid" style="margin-top:12px">
+      <label>Dispositivo <select id="micdev"><option value="">Padrão do sistema</option></select></label>
+      <label><input type="checkbox" id="ns" checked> Reduzir ruído do microfone</label>
+      <label><input type="checkbox" id="sys" checked> Gravar áudio da aba ou sistema</label>
+    </div></details>
+    <p class="muted">Ao iniciar, o navegador abrirá a seleção da aba, janela ou tela. Depois haverá uma contagem regressiva de 5 segundos para você se preparar.</p>
+    <div class="row"><button class="rec" id="start">Escolher tela e iniciar</button></div>
+  </section>
+  <section class="panel" id="recording" hidden>
+    <h2 style="margin-top:0">Gravação em andamento</h2>
+    <p class="muted">Você pode alternar para a tela ou janela compartilhada. Volte aqui para pausar, continuar ou parar.</p>
+  </section>
+  <div id="live" class="recording-screen" hidden>
+    <div class="recording-title"><span class="dot"></span>Gravando <span id="t">00:00:00</span></div>
+    <div class="muted" id="info"></div>
+    <div class="capture-preview" id="capturePreview" hidden>
+      <video id="screenPreview" muted autoplay playsinline></video>
+      <div class="camera-overlay" id="cameraOverlay" hidden>
+        <video id="cameraPreview" muted autoplay playsinline></video>
+        <span class="camera-resize" id="cameraResize" aria-label="Redimensionar miniatura da câmera"></span>
+      </div>
+    </div>
+    <p class="muted" id="cameraHint" hidden>Arraste a miniatura para posicioná-la; arraste o canto para redimensionar.</p>
+    <div class="row"><button class="sec" id="pause" disabled>Pausar</button><button id="stop" disabled>Parar gravação</button></div>
+  </div>
+  <p class="err" id="err" role="alert"></p>
+  <p id="msg" role="status"></p>
+</div>
+
+<section class="panel" id="ed" hidden>
+ <div class="edg">
+  <div class="edl">
+    <div class="edl-fixed" id="edFixed">
+      <div class="row" style="justify-content:space-between"><h2 style="margin:0">Editor</h2><div class="row"><button class="sec" id="undo">Desfazer</button><button class="sec" id="redo">Refazer</button></div></div>
+      <div id="stage" style="margin-top:12px"><canvas id="cv" tabindex="0"></canvas><div id="hs"></div></div>
+    </div>
+    <div class="ed-scroll" id="edScroll">
+      <div class="row" style="margin-top:10px"><button class="sec" id="pp">Reproduzir</button><span class="muted" id="tc">00:00:00 / 00:00:00</span><label style="margin-left:auto">Zoom <input type="range" id="zm" min="15" max="300" value="60" style="width:130px"></label></div>
+      <div class="tlw"><div class="labs"><div></div><div>V3</div><div>V2</div><div>V1</div><div>A1</div><div>A2</div><div>Texto</div></div><div class="tl" id="tl"><div id="tli"></div></div></div>
+      <div class="row"><button class="sec" id="split">Dividir (S)</button><button class="sec" id="dup">Duplicar</button><button class="sec" id="sep">Separar áudio</button><button class="sec" id="del">Remover (Del)</button><label class="btnl">Importar mídia<input type="file" id="imp" accept="video/*,image/*,audio/*,.gif" hidden></label><button id="exp">Salvar edição</button></div>
+      <progress id="prog" value="0" max="1" hidden></progress>
+      <p id="out"></p>
+    </div>
+  </div>
+  <aside class="edr">
+    <details name="tool" id="d-clip" open><summary>Trecho selecionado <span id="ctr"></span></summary><div class="dbody">
+      <p class="muted" id="cnone">Selecione um trecho na timeline.</p>
+      <div id="cp" hidden><div class="grid">
+        <label>Velocidade <select id="cspd"><option value="0.5">0,5×</option><option value="1">1×</option><option value="1.5">1,5×</option><option value="2">2×</option></select></label>
+        <label style="display:block">Volume do trecho: <span id="cvv">100</span>%<input type="range" id="cvol" min="0" max="200" value="100"></label>
+        <label style="display:block">Entrada gradual (s)<input type="range" id="cfi" min="0" max="5" step="0.1" value="0"></label>
+        <label style="display:block">Saída gradual (s)<input type="range" id="cfo" min="0" max="5" step="0.1" value="0"></label>
+        <label><input type="checkbox" id="cmute"> Silenciar este trecho</label>
+        <label id="cov" style="display:block">Tamanho da janela<input type="range" id="csc" min="8" max="150" value="40"></label>
+        <label id="cpl">Posição <select id="cpos"><option value="0.78,0.22">Canto superior direito</option><option value="0.22,0.22">Canto superior esquerdo</option><option value="0.78,0.78">Canto inferior direito</option><option value="0.22,0.78">Canto inferior esquerdo</option><option value="0.5,0.5">Centro</option></select></label>
+      </div><p class="muted">Em V2 e V3, arraste os quadrados nos cantos da janela, na prévia, para redimensionar mantendo a proporção. Arraste a imagem para mover. Para ter o som de um vídeo em uma faixa própria, use "Separar áudio".</p></div>
+    </div></details>
+    <details name="tool" id="d-txt"><summary>Texto</summary><div class="dbody">
+      <div class="grid">
+        <button id="addtx">Adicionar texto na agulha</button>
+        <label style="display:block">Texto<input type="text" id="txt" placeholder="Digite o texto" style="width:100%"></label>
+        <label style="display:block">Fonte (Google Fonts)<input type="text" id="txf" list="fl" value="Montserrat" style="width:100%"></label>
+        <label style="display:block">Tamanho<input type="range" id="txs" min="2" max="24" value="7"></label>
+        <label>Cor <input type="color" id="txc" value="#ffffff" aria-label="Cor do texto"></label>
+        <label><input type="checkbox" id="txb"> Negrito</label>
+        <label>Duração ao adicionar (s) <input type="number" id="txd" value="3" min="1" style="width:64px"></label>
+      </div>
+      <datalist id="fl"><option value="Anton"><option value="Bangers"><option value="Bebas Neue"><option value="Caveat"><option value="Dancing Script"><option value="Lobster"><option value="Montserrat"><option value="Oswald"><option value="Pacifico"><option value="Permanent Marker"><option value="Playfair Display"><option value="Poppins"><option value="Press Start 2P"><option value="Righteous"><option value="Roboto"><option value="Roboto Slab"></datalist>
+      <p class="muted">Depois de adicionar, arraste o texto na prévia para colocá-lo onde quiser. Na timeline, arraste a barra vermelha para mudar quando ele aparece. Digite o nome de qualquer fonte do Google Fonts (precisa de internet).</p>
+      <div id="txl"></div>
+    </div></details>
+    <details name="tool"><summary>Formato e cor</summary><div class="dbody"><div class="grid">
+      <label>Formato <select id="asp"><option value="0">Original</option><option value="1.7778">16:9 (horizontal)</option><option value="0.5625">9:16 (vertical)</option><option value="1">1:1 (quadrado)</option></select></label>
+      <label style="display:block">Brilho: <span id="bv">100</span>%<input type="range" id="br" min="50" max="150" value="100"></label>
+      <label style="display:block">Contraste: <span id="cv2">100</span>%<input type="range" id="co" min="50" max="150" value="100"></label>
+      <label style="display:block">Saturação: <span id="sv">100</span>%<input type="range" id="sa" min="0" max="200" value="100"></label>
+    </div></div></details>
+    <details name="tool"><summary>Áudio</summary><div class="dbody">
+      <div class="mt" title="Nível de saída"><i id="mti"></i></div>
+      <div class="grid" style="margin-top:12px">
+        <label style="display:block">Volume geral: <span id="vv">100</span>%<input type="range" id="vol" min="0" max="200" value="100"></label>
+        <label style="display:block">Graves: <span id="ebv">0</span> dB<input type="range" id="eb" min="-12" max="12" value="0"></label>
+        <label style="display:block">Médios: <span id="emv">0</span> dB<input type="range" id="em" min="-12" max="12" value="0"></label>
+        <label style="display:block">Agudos: <span id="eav">0</span> dB<input type="range" id="ea" min="-12" max="12" value="0"></label>
+        <label><input type="checkbox" id="dn" checked> Remover ruído de fundo</label>
+        <label><input type="checkbox" id="nz"> Nivelar volume (compressor)</label>
+        <label><input type="checkbox" id="mute"> Silenciar tudo</label>
+      </div>
+      <p class="muted">O medidor fica vermelho quando o volume é alto demais e o som distorce.</p>
+    </div></details>
+    <details name="tool"><summary>Mais opções</summary><div class="dbody">
+      <div class="row"><button class="sec" id="orig">Salvar original</button><button class="sec" id="new">Voltar ao início</button></div>
+      <p class="muted">"Salvar edição" exporta em tempo real: mantenha esta aba aberta e visível até terminar. Depois de salvar, o editor fecha e o início volta a aparecer.</p>
+    </div></details>
+    <details name="tool"><summary>Dicas e atalhos</summary><div class="dbody"><p class="muted">Arraste a agulha vermelha pela régua ou clique em um espaço vazio da timeline para ir até lá. As setas movem a agulha um quadro por vez; arrastar também posiciona a agulha no quadro mais próximo. Arraste as bordas de um trecho para aparar. Os trechos encaixam nas bordas dos outros e na agulha. Atalhos: Espaço, S (dividir), Delete, setas, Ctrl+Z e Ctrl+Y. GIFs animados repetem continuamente, sem sincronia com o início do trecho.</p></div></details>
+  </aside>
+ </div>
+</section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
